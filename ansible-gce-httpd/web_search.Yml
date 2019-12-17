@@ -1,0 +1,13 @@
+---
+plugin: gcp_compute
+zones:
+  - europe-west1-b
+projects:
+  - ansible-gce-262114
+groups:
+  web-servers: "'web' in name"
+hosthames:
+  - name
+filters:[]
+auth_kind: ServiceAccount
+service_account_file: /tmp/ansible-gce-262114-0246eaeb8ce7.json
