@@ -26,10 +26,10 @@
           tags: apache-tomcat
       register: gce
 
-    - name: Wait for SSH to come up
+    - name: SSH configuration
       wait_for: host={{ item.public_ip }} port=22 delay=10 timeout=60
       with_items: "{{ gce.instance_data }}"
 
-    - name: Add host to groupname
+    - name: Add host for output
       add_host: hostname={{ item.public_ip }} groupname=new_instances
       with_items: "{{ gce.instance_data }}"
