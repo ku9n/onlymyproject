@@ -36,6 +36,10 @@ resource "google_compute_instance" "app" {
     destination = "/tmp/tomcat.service"
   }
   provisioner "file" {
+    source = "files/RME.txt"
+    destination = "/tmp/README.txt"
+  }
+  provisioner "file" {
     source = "files/README.txt"
     destination = "/tmp/README.txt"
   }
