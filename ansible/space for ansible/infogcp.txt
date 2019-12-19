@@ -1,0 +1,4 @@
+
+PROJECT='ansible-gce-262114'
+SERVICE_ACCOUNT='ansible@ansible-gce-262114.iam.gserviceaccount.com'
+ZONE='europe-west1-b'
