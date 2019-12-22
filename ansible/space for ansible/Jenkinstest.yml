@@ -1,0 +1,59 @@
+---
+- name: Install Jenkins
+  hosts: all
+  gather_facts: false
+  become: yes
+  tasks:
+    - name: install the latest version of rsync
+      yum:
+        name: rsync
+        state: latest
+
+    - name: Install transport https
+      apt:
+        name: apt-transport-https
+        state: present
+
+    - name: Update and upgrade apt packages
+      apt:
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 86400
+
+    - name: Install yum
+      yum:
+        name:
+          - yum
+          - wget
+          - rpm
+          - gpg
+    - name: Shell for install jenkins
+      shell:
+        wget -q -O - https://pkg.jenkins.io/debian/jenkins-ci.org.key | sudo apt-key add -
+        sudo sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+        sudo apt-get update -y
+        sudo apt-get install jenkins -y
+
+    - name: Import Jenkins Key
+      rpm_key:
+        state: present
+        key: http://pkg.jenkins-ci.org/redhat/jenkins-ci.org.key
+
+    - name: Start & Enable Jenkins
+      systemd:
+        name: jenkins
+        daemon_reload: yes
+        state: started
+        enabled: true
+
+    - name: Sleep for 30 seconds and continue with play
+      wait_for: timeout=30
+
+    - name: Get init password Jenkins
+      shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+      changed_when: false
+      register: result
+
+    - name: Print init password Jenkins
+      debug:
+        var: result.stdout

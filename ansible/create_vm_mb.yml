@@ -23,7 +23,10 @@
           credentials_file: "{{ credentials_file }}"
           project_id: "{{ project_id }}"
           zone: "{{ zone }}"
-          tags: apache-tomcat
+          tags:
+            - apache-tomcat
+            - http-server
+            - https-server
       register: gce
 
     - name: SSH configuration

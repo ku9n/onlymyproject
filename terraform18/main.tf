@@ -17,7 +17,7 @@ resource "google_compute_instance" "app" {
   metadata = {
     ssh-keys = "appuser:${file("~/.ssh/appuser.pub")}"
   }
-  tags = ["apang"]
+  tags = ["apang", "https-server", "http-server"]
   network_interface {
     network = "default"
     access_config {
@@ -25,7 +25,7 @@ resource "google_compute_instance" "app" {
     }
   }
   connection {
-    host = "34.76.184.80"
+    host = "35.240.35.104"
     type = "ssh"
     user = "appuser"
     agent = false
@@ -36,12 +36,12 @@ resource "google_compute_instance" "app" {
     destination = "/tmp/tomcat.service"
   }
   provisioner "file" {
-    source = "files/RME.txt"
-    destination = "/tmp/README.txt"
+    source = "files/tomcat-users.xml"
+    destination = "/tmp/tomcat-users.xml"
   }
   provisioner "file" {
-    source = "files/README.txt"
-    destination = "/tmp/README.txt"
+    source = "files/context.xml"
+    destination = "/tmp/context.xml"
   }
   provisioner "remote-exec" {
     script = "files/apache.sh"

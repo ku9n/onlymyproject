@@ -56,6 +56,27 @@
        dest: /etc/systemd/system/
        mode: 0755
 
+  - name: Copy tomcat-users to conf
+    copy:
+       src: tomcat-users.xml
+       dest: /opt/tomcat/conf/tomcat-users.xml
+       mode: 0755
+       force: yes
+
+  - name: Copy context to manager
+    copy:
+       src: context.xml
+       dest: /opt/tomcat/webapps/manager/META-INF/context.xml
+       mode: 0755
+       force: yes
+
+  - name: Copy context to host-m
+    copy:
+       src: context.xml
+       dest: /opt/tomcat/webapps/host-manager/META-INF/context.xml
+       mode: 0755
+       force: yes
+
   - name: Start and enable Tomcat service
     systemd:
       name: tomcat
