@@ -1,0 +1,61 @@
+---
+- name: Install Apache and html.page
+  hosts: all
+  become: yes
+
+  vars:
+    src_fld: /home/ku9n/onlymyproject/ansible-html/myweb
+    dst_fld: /var/www/html
+    os_pcg: yum
+    name_service: httpd
+
+  tasks:
+  - block: # -=Block for Ubuntu=-
+      - name: Install Apache2 for Ubuntu
+        apt:
+          name: apache2
+          state: latest
+      - name: Start apache2
+        service:
+          name: apache2
+          state: started
+          enabled: yes
+    when: ansible_os_family == "Debian"
+  - block: # -=Block for Other OS_Family=-
+      - name: Install Apache2 for Other OS_Family
+        yum:
+          name: httpd
+          state: latest
+      - name: Started WebS
+        service:
+          name: httpd
+          state: started
+          enabled: yes
+    when: ansible_os_family != "Debian"
+
+  - name: Generate my page
+    template: src={{ src_fld }}/page.j2 dest={{ dst_fld }}/index.html mode=0555
+    notify:
+      - Restart Apache2 for Ubuntu
+      - Restart Apache2 for others
+
+  - name: Copy my file
+    copy: src={{ src_fld }}/{{ item }} dest={{ dst_fld }} mode=0555
+    loop:
+      - wallpaperflare.com_wallpaper.jpg
+    notify:
+      - Restart Apache2 for Ubuntu
+      - Restart Apache2 for others
+
+
+  handlers:
+    - name: Restart Apache2 for Ubuntu
+      service:
+        name: apache2
+        state: restarted
+      when: ansible_os_family == "Debian"
+    - name: Restart Apache2 for others
+      service:
+        name: httpd
+        state: restarted
+      when: ansible_os_family != "Debian"

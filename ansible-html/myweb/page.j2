@@ -1,0 +1,32 @@
+<HTML>
+<HEAD>
+<TITLE>ku9n</TITLE>
+<SCRIPT LANGUAGE="JavaScript">
+      var sizes = new Array(0,1,2,4,8,10,12);
+      sizes.pos = 0;
+
+
+function Elastic()
+{
+    var el = document.all.elastic
+    if (null == el.direction)el.direction = 1
+    else if ((sizes.pos > sizes.lenght - 2)) || (0 == sizes.pos))
+    el.direction *= -1
+    el.style.letterSpacing = sizes[sizes.pos += el.direction]
+setTimeout('Elastic()',100)
+}
+p {
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+</SCRIPT>
+<BODY bgcolor="gray" background=wallpaperflare.com_wallpaper.jpg  onLoad=Elastic()>
+<LEFT>
+<br><br><br><br>
+<br><br><br><br>
+<font color="white">Name of this host: {{ ansible_hostname }}<p>
+<font color="white">User using this server: {{ ansible_user_id }}<p>
+<font color="white">OS_Family Linux: {{ ansible_os_family }}<p>
+<font color="white">Package manager: {{ ansible_pkg_mgr }}<p>
+<font color="white">IP adress of this server: Look up idiot :D<p>
+</body>
+</HTML>
