@@ -1,0 +1,35 @@
+version: '3.1'
+services:
+  tomcat:
+    build:
+      context: ./tomcat
+      dockerfile: Dockerfile
+    container_name: tomcat8
+    image: itstomcat8
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    image: itsnginx
+    links:
+      - "tomcat"
+    volumes:
+      - ./proxyConf:/etc/nginx/conf.d
+    depends_on:
+      - tomcat
+    ports:
+      - "80:80"
+      - "443:443"
+  jenkins:
+    container_name: custom_jenkins
+    build: ./
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:50000:50000"
+    volumes:
+      - /opt/jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      JENKINS_OPTS: "--prefix=/jenkins"
+    restart: always
