@@ -15,7 +15,7 @@ resource "google_compute_instance" "app" {
     }
   }
   metadata = {
-    ssh-keys = "appuser:${file("~/.ssh/appuser.pub")}"
+    ssh-keys = "ku9n:${file("~/.ssh/id_rsa.pub")}"
   }
   tags = ["apang", "https-server", "http-server"]
   network_interface {
@@ -27,9 +27,9 @@ resource "google_compute_instance" "app" {
   connection {
     host = "35.240.35.104"
     type = "ssh"
-    user = "appuser"
+    user = "ku9n"
     agent = false
-    private_key = "${file("~/.ssh/appuser")}"
+    private_key = "${file("~/.ssh/id_rsa")}"
   }
   provisioner "file" {
     source = "files/tomcat.service"
