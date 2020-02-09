@@ -1,0 +1,155 @@
+---
+
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  vars:
+    key_name: my_aws
+    region: eu-central-1
+    image: ami-0b418580298265d5c
+    id: "webs"
+    sec_group: "{{ id }}-sec"
+
+  tasks:
+
+    - name: Facts
+      block:
+      - name: Get instances facts
+        ec2_instance_info:
+          aws_access_key: "{{ec2_access_key}}"
+          aws_secret_key: "{{ec2_secret_key}}"
+          region: "{{ region }}"
+        register: result
+
+      - name: Instances ID
+        debug:
+          msg: "ID: {{ item.instance_id }} - State: {{ item.state.name }} - Public DNS: {{ item.public_dns_name }}"
+        loop: "{{ result.instances }}"
+
+      tags: always
+
+    - name: Provisioning EC2 instances
+      block:
+
+      - name: Upload public key to AWS
+        ec2_key:
+          name: "{{ key_name }}"
+          key_material: "{{ lookup('file', '/home/ku9n/.ssh/{{ key_name }}.pub') }}"
+          region: "{{ region }}"
+          aws_access_key: "{{ec2_access_key}}"
+          aws_secret_key: "{{ec2_secret_key}}"
+
+      - name: Create security group
+        ec2_group:
+          name: "{{ sec_group }}"
+          description: "Sec group for app {{ id }}"
+          # vpc_id: 12345
+          region: "{{ region }}"
+          aws_access_key: "{{ec2_access_key}}"
+          aws_secret_key: "{{ec2_secret_key}}"
+          rules:
+            - proto: tcp  # ssh
+              from_port: 22
+              to_port: 22
+              cidr_ip: 0.0.0.0/0
+            - proto: tcp  # http
+              from_port: 80
+              to_port: 80
+              cidr_ip: 0.0.0.0/0
+            - proto: tcp  # https
+              from_port: 443
+              to_port: 443
+              cidr_ip: 0.0.0.0/0
+          rules_egress:
+            - proto: all
+              cidr_ip: 0.0.0.0/0
+        register: result_sec_group
+
+      - name: Create the ELB only listening over port 80
+        ec2_elb_lb:
+          name: my-load-balancer
+          state: present
+          region: eu-central-1
+          security_group_ids: "{{ result_sec_group.group_id }}"
+          zones:
+            - eu-central-1a
+            - eu-central-1b
+          listeners:
+            - protocol: http
+              load_balancer_port: 80
+              instance_port: 80
+        register: elb
+
+
+      - name: Create an EC2 instance
+        ec2:
+          aws_access_key: "{{ec2_access_key}}"
+          aws_secret_key: "{{ec2_secret_key}}"
+          key_name: "{{ key_name }}"
+          id: "{{ id }}"
+          group_id:
+            - "{{ result_sec_group.group_id }}"
+            - "{{ elb.elb.security_group_ids | first }}"
+          image: "{{ image }}"
+          instance_type: t2.micro
+          region: "{{ region }}"
+          wait: true
+          exact_count: 2
+          count_tag:
+             Name: My
+          instance_tags:
+             Name: My
+        register: ec2_instances
+
+      - name: Store EC2 instance IPs to provision against
+        add_host:
+          hostname: "{{ item.public_ip }}"
+          groupname: ec2_instances_ips
+        with_items: "{{ ec2_instances.tagged_instances }}"
+
+      - name: Wait for servers to come online
+        wait_for:
+          host: "{{ item.public_ip }}"
+          port: 22
+          timeout: 180
+        with_items: "{{ ec2_instances.tagged_instances }}"
+
+      - name: Add EC2 instances as known hosts
+        known_hosts:
+          name: "{{ item.public_ip }}"
+          key: "{{ lookup('pipe', 'ssh-keyscan -t rsa ' + item.public_ip) }}"
+        with_items: "{{ ec2_instances.tagged_instances }}"
+
+- hosts: localhost
+  tasks:
+    - name: Add each EC2 instance to the ELB
+      ec2_elb:
+        state: present
+        ec2_elbs: my-load-balancer
+        region: eu-central-1
+        instance_id: "{{ item.id }}"
+        wait: no
+      with_items: "{{ ec2_instances.tagged_instances }}"
+
+
+
+
+- hosts: all
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Copy file with owner and permissions
+      copy:
+        src: /home/ku9n/onlymyproject/aws_alb_ans/nginx.sh
+        dest: /home/ubuntu/
+        owner: ubuntu
+
+    - name: chmod
+      shell:
+        cmd: chmod +x nginx.sh
+
+    - name: ensure nginx is at the latest version
+      shell:
+        cmd: ./nginx.sh

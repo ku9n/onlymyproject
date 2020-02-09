@@ -1,0 +1,7 @@
+region: eu-central-1
+instance_type: t2.nano
+ami: ami-07cda0db070313c52  # Ubuntu 14.04 LTS
+app_code_user: "ubuntu" # remote user
+env: demo
+pem_key: ~/.ssh/awsku9n.pem # key.pem
+ssh_key: ~/.ssh/my_aws.pub
