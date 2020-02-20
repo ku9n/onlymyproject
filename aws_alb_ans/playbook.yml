@@ -8,7 +8,7 @@
     key_name: my_aws
     region: eu-central-1
     image: ami-0b418580298265d5c
-    id: "webs"
+    id: "jenkins"
     sec_group: "{{ id }}-sec"
 
   tasks:
@@ -58,8 +58,8 @@
               to_port: 80
               cidr_ip: 0.0.0.0/0
             - proto: tcp  # https
-              from_port: 443
-              to_port: 443
+              from_port: 8080
+              to_port: 8080
               cidr_ip: 0.0.0.0/0
           rules_egress:
             - proto: all
