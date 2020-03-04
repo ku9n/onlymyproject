@@ -4,6 +4,12 @@ variable "aws_access_key" {
 
 variable "aws_secret_key" {
   default = "yyyyyyyyyyyyyyyyyyy"
+  default = "my_key"
+}
+
+variable "aws_secret_key" {
+  default = "my_secret_key"
+
 }
 variable "region" {
   default = "eu-central-1"
