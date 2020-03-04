@@ -1,9 +1,9 @@
 variable "aws_access_key" {
-  default = "AKIAJF5CA6AAX6GPPKRQ"
+  default = "xxxxxxxxxxxxxx"
 }
 
 variable "aws_secret_key" {
-  default = "92ayY68Z10uC8BYl3eqR2HCVYl/amxYWrpqE+aqx"
+  default = "yyyyyyyyyyyyyyyyyyy"
 }
 variable "region" {
   default = "eu-central-1"
@@ -12,7 +12,7 @@ variable "aws_vpc" { # default vpc_id
   default = "vpc-ffdb1b95"
 }
 variable "quantity" {
- default = 2
+ default = 1
 }
  variable "public_key_path" {
   default = "/home/ku9n/.ssh/awsku9n.pem"

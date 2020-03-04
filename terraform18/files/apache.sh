@@ -5,10 +5,10 @@ sudo apt install default-jdk -y
 sudo groupadd tomcat
 sudo useradd -s /bin/false -g tomcat -d /opt/tomcat tomcat
 cd /tmp
-curl -O http://apache.volia.net/tomcat/tomcat-9/v9.0.30/bin/apache-tomcat-9.0.30.tar.gz
+curl -O http://apache.volia.net/tomcat/tomcat-9/v9.0.31/bin/apache-tomcat-9.0.31.tar.gz
 sudo mkdir /opt/tomcat
 cd /opt/tomcat
-sudo tar xpvf /tmp/apache-tomcat-9.0.30.tar.gz --strip-components=1 -C /opt/tomcat
+sudo tar xpvf /tmp/apache-tomcat-9.0.31.tar.gz --strip-components=1 -C /opt/tomcat
 sudo chgrp -R tomcat /opt/tomcat
 sudo chmod -R g+r conf
 sudo chmod g+x conf
