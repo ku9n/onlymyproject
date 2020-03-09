@@ -304,8 +304,20 @@ resource "aws_launch_configuration" "lc" {
   user_data = <<-EOF
               #!/bin/bash
               sudo apt update -y
-              sudo apt install apache2 -y
+              sudo apt install apache2 mysql-server mysql-client php7.2 php7.2-dev -y
               sudo service apache2 start
+              sudo mysql -u root -e "CREATE USER 'ku9n'@'localhost' IDENTIFIED BY 'password';"
+              sudo mysql -u root -e "FLUSH PRIVILEGES;"
+              sudo mysql -u root -e "CREATE DATABASE wordpressdb;"
+              sudo service mysql start
+              wget https://wordpress.org/latest.tar.gz
+              tar -xvzf latest.tar.gz
+              sudo cp -r wordpress/* /var/www/html
+              sudo apt install php7.2-mysql
+              sudo chown -R www-data:www-data /var/www/html
+              cd /var/www/html/
+              sudo rm index.html
+              sudo systemctl restart apache2
               EOF
   lifecycle {
     create_before_destroy = true
@@ -320,8 +332,8 @@ resource "aws_elb" "elb" {
     unhealthy_threshold = 2
     timeout = 3
     interval = 30
-    #target = "TCP:80"
-    target = "HTTP:80/index.html"
+    target = "TCP:80"
+    #target = "HTTP:80/"
   }
 
   # This adds a listener for incoming HTTP requests.
@@ -378,6 +390,56 @@ resource "aws_security_group" "elb-sg" {
     from_port = 80
     to_port = 80
     protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+resource "aws_db_subnet_group" "HA-DB" {
+  name       = "db-group"
+  subnet_ids = ["${aws_subnet.subnet5.id}", "${aws_subnet.subnet6.id}"]
+
+  tags = {
+    Name = "My DB subnet group"
+  }
+}
+
+resource "aws_db_instance" "mydb" {
+  allocated_storage        = 8 # gigabytes
+  backup_retention_period  = 7   # in days
+  db_subnet_group_name     = "${aws_db_subnet_group.HA-DB.name}"
+  engine                   = "mysql"
+  engine_version           = "5.7"
+  identifier               = "mydb"
+  instance_class           = "db.t2.micro"
+  multi_az                 = false
+  name                     = "mydb"
+  password                 = "password"
+  port                     = 3306
+  storage_type             = "gp2"
+  username                 = "ku9n"
+  vpc_security_group_ids   = ["${aws_security_group.mydb_sec_group.id}"]
+}
+resource "aws_security_group" "mydb_sec_group" {
+  name = "mydb"
+  vpc_id = "${aws_vpc.myHAvpc.id}"
+
+  # Only mysql in
+  ingress {
+    from_port = 3306
+    to_port = 3306
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  # Allow all outbound traffic.
+  egress {
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
