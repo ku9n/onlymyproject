@@ -50,8 +50,8 @@ resource "aws_launch_configuration" "lconf" {
   key_name               = "${var.key_name}"
   user_data = <<-EOF
               #!/bin/bash
-              echo "Hello, World" > index.html
-              nohup busybox httpd -f -p 8080 &
+              sudo apt-get update
+              sudo apt-get install apache2 -y
               EOF
   lifecycle {
     create_before_destroy = true
@@ -97,12 +97,12 @@ resource "aws_elb" "myelb" {
     unhealthy_threshold = 2
     timeout = 3
     interval = 30
-    target = "HTTP:8080/"
+    target = "HTTP:80/"
   }
   listener {
     lb_port = 80
     lb_protocol = "http"
-    instance_port = "8080"
+    instance_port = "80"
     instance_protocol = "http"
   }
 }

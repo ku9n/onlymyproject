@@ -15,6 +15,18 @@ resource "aws_instance" "web" {
   iam_instance_profile = "${aws_iam_instance_profile.s3_profile.name}"
   source_dest_check = false
   instance_type = "t2.micro"
+  user_data = <<-EOF
+              #!/bin/bash
+              sudo apt-get update
+              sudo apt-get install apache2 -y
+              sudo apt  install awscli -y
+              aws configure
+              "${var.aws_access_key}"
+              "${var.aws_secret_key}"
+              "${var.region}"
+              json
+              sudo aws s3 sync s3://s3-ku9nwebsite/ /var/www/html/
+              EOF
   tags = {
     Name = "${format("web-%03d", count.index + 1)}"
   }
@@ -36,8 +48,8 @@ resource "aws_security_group" "allow_tls" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
-    from_port   = 8080
-    to_port     = 8080
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -46,7 +58,7 @@ resource "aws_security_group" "allow_tls" {
   }
 }
 resource "aws_s3_bucket" "s3_bucket" {
-  bucket = "s3-website"
+  bucket = "s3-ku9nwebsite"
   acl    = "public-read"
 
   website {
@@ -78,7 +90,7 @@ resource "aws_s3_bucket_policy" "s3_bucket" {
       "Effect": "Deny",
       "Principal": "*",
       "Action": "s3:*",
-      "Resource": "arn:aws:s3:::s3-website/*",
+      "Resource": "arn:aws:s3:::s3-ku9nwebsite/*",
       "Condition": {
          "IpAddress": {"aws:SourceIp": "8.8.8.8/32"}
       }
@@ -147,7 +159,7 @@ resource "aws_lb" "alb_tf" {
 }
 resource "aws_lb_target_group" "lb_tg" {
   name     = "tf-lb-tg"
-  port     = 8080
+  port     = 80
   protocol = "HTTP"
   vpc_id   = var.aws_vpc
 
@@ -157,12 +169,12 @@ resource "aws_lb_target_group" "lb_tg" {
     timeout             = 5
     interval            = 10
     path                = "/"
-    port                = "8080"
+    port                = "80"
   }
 }
 resource "aws_lb_listener" "first_listener" {
   load_balancer_arn = "${aws_lb.alb_tf.arn}"
-  port              = "8080"
+  port              = "80"
   protocol          = "HTTP"
 
   default_action {
@@ -174,5 +186,10 @@ resource "aws_lb_target_group_attachment" "my_atach1" {
   count = length(aws_instance.web)
   target_group_arn = "${aws_lb_target_group.lb_tg.arn}"
   target_id        = aws_instance.web[count.index].id
-  port             = 8080
+  port             = 80
+}
+resource "null_resource" "remove_and_upload_to_s3" {
+  provisioner "local-exec" {
+    command = "aws s3 sync /home/ku9n/onlymyproject/portfolio/ s3://${aws_s3_bucket.s3_bucket.id}"
+  }
 }
